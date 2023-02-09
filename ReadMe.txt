@@ -8,3 +8,9 @@ docker run -dt --restart always --network host -v /etc/dockerapp/3proxy:/usr/loc
 sudo docker run -dt --restart always --name haproxy --network host -v $(pwd):/usr/local/etc/haproxy:ro haproxytech/haproxy-alpine:2.4
    
 полная инструкция HAProxy https://www.haproxy.com/blog/how-to-run-haproxy-with-docker/
+
+
+Установка Python классов для работы с API Huawei
+
+pip install huawei-lte-api
+
