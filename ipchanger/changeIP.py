@@ -87,7 +87,7 @@ with open('ltemodems.cfg', 'r') as f:
 # удостоверимся, что модем точно подключен к интернету и что полученный IP-адрес уникален, и вернем его в пул.
 # Если модем не подключился или адрес не уникален, то повторим процедуру смены адреса (максимум 3 повтора).
 for modem in Modems:
-    with Connection("http://admin:Password01*@" + modem) as connection:
+    with Connection("http://admin:*****@" + modem) as connection:
         client = Client(connection)
         if isModemNeedChangeIP(modem, client):
             removeModemFromPull(modem)
