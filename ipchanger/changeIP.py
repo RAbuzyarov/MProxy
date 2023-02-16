@@ -24,7 +24,8 @@ def returnModemToPull(modem):
     time.sleep(1)
 
 def isModemNeedChangeIP(modem, client) -> bool:
-    if int(client.monitoring.traffic_statistics().get('CurrentConnectTime')) >= max_ip_life_time:
+    currentworktime = int(client.monitoring.traffic_statistics().get('CurrentConnectTime'))
+    if currentworktime >= max_ip_life_time or currentworktime == 0: # если currentworktime равно 0, то значит модем отключен и надо его принудительно дернуть
         return True
     else:
         return False
