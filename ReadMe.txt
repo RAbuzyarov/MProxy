@@ -38,22 +38,182 @@
 
     Инструкция по установке
 
-Поднятие контейнера 3proxy:
+1. Установить Linux. Провереная конфигурация - последняя версия сервера Ubuntu
+2. На линуксе установить doker по инструкции https://docs.docker.com/engine/install/ubuntu/
+3. Подключить модемы и если ОС на виртуализации, то пробросить подключение USB модемов в виртуалку.
+4. Настроить через веб-интерфесы IP-адреса модемам, и вход в вебку по логину/паролю
+5. При правильном подключении модемы в линуксе должны получить каждый свой IP-интерфейс с IP-адресом,
+который вы задали в вебке каждого модема. Список IP-интерфейсов можно получить командой ifconfig -a
+В примере ниже видны два модема на интерфейсах enp1s27u1 и enp1s27u2 с IP-адресами 192.168.8.100 и
+192.168.9.100
+
+jaka@netbot:~$ ifconfig -a
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 172.17.255.255
+        ether 02:42:ea:20:f8:e1  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+enp1s27u1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.8.100  netmask 255.255.255.0  broadcast 192.168.8.255
+        inet6 fe80::e5b:8fff:fe27:9a63  prefixlen 64  scopeid 0x20<link>
+        ether 0c:5b:8f:27:9a:63  txqueuelen 1000  (Ethernet)
+        RX packets 119201  bytes 89989223 (89.9 MB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 116845  bytes 18888764 (18.8 MB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+enp1s27u2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.9.100  netmask 255.255.255.0  broadcast 192.168.9.255
+        inet6 fe80::e5b:8fff:fe27:9a64  prefixlen 64  scopeid 0x20<link>
+        ether 0c:5b:8f:27:9a:64  txqueuelen 1000  (Ethernet)
+        RX packets 85192  bytes 81966158 (81.9 MB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 72949  bytes 9786675 (9.7 MB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+ens18: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.63  netmask 255.255.255.0  broadcast 192.168.1.255
+        inet6 fe80::e478:70ff:fe8a:ef75  prefixlen 64  scopeid 0x20<link>
+        ether e6:78:70:8a:ef:75  txqueuelen 1000  (Ethernet)
+        RX packets 298954  bytes 218301197 (218.3 MB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 164093  bytes 180353572 (180.3 MB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 341249  bytes 178598067 (178.5 MB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 341249  bytes 178598067 (178.5 MB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+jaka@netbot:~$
+
+Если видите все интерфейсы, то переходите к п.7. Это значит модемы определились, но теперь надо настроить сетевые параметры.
+
+Если вы видите не все интерфейсы, или вообще ни одного не видите, то это значит у некоторых или у всех модемов одинаковый MAC-адрес,
+что запрещено. Такое может быть, если на модемы заливалась прошивка с идентичными настройками. Переходите на сл. пункт.
+
+6. Удостовериться, что у вас действительно есть проблема одинаковых MAC-адресов, можно дав команду:
+dmesg -T | grep -i usb
+В примере ниже в последних двух строках вывода этой команды видно, что два модема имеют одинаковые MAC-и
+
+[Thu Feb 16 10:18:08 2023] usb 2-2: Product: HUAWEI_MOBILE
+[Thu Feb 16 10:18:08 2023] usb 2-2: Manufacturer: HUAWEI_MOBILE
+[Thu Feb 16 10:18:08 2023] usb-storage 2-1:1.2: USB Mass Storage device detected
+[Thu Feb 16 10:18:08 2023] scsi host3: usb-storage 2-1:1.2
+[Thu Feb 16 10:18:08 2023] usb-storage 2-2:1.2: USB Mass Storage device detected
+[Thu Feb 16 10:18:08 2023] scsi host4: usb-storage 2-2:1.2
+[Thu Feb 16 10:18:08 2023] usbcore: registered new interface driver usb-storage
+[Thu Feb 16 10:18:08 2023] usbcore: registered new interface driver uas
+[Thu Feb 16 10:18:10 2023] cdc_ether 2-1:1.0 eth0: register 'cdc_ether' at usb-0000:01:1b.0-1, CDC Ethernet Device, 0c:5b:8f:27:9a:64
+[Thu Feb 16 10:18:10 2023] cdc_ether 2-2:1.0 eth1: register 'cdc_ether' at usb-0000:01:1b.0-2, CDC Ethernet Device, 0c:5b:8f:27:9a:64
+
+чтобы исправить это, необходимо сначала определить значение параметра ID_PATH для каждого модема. Это можно сделать
+выгрузив вывод команды
+udevadm info --export-db > udevadm.txt
+
+В выгруженном файле udevadm.txt надо найти значения параметра ID_PATH для всех модемов. В файле они должны находиться
+вблизи вот таких строк "DRIVER=cdc_ether". Значения должны быть похожи на эти:
+	ID_PATH=pci-0000:01:1b.0-usb-0:1:1.0
+	ID_PATH=pci-0000:01:1b.0-usb-0:2:1.0
+
+Далее в папке /etc/systemd/network/ для каждого модема создаем по одном конфигурационному файлу с такими именами
+01-huawei-e3372h.link - для первого модема
+02-huawei-e3372h.link - для второго модема
+и т.п.
+
+В каждом файле должен быть такой конфиг:
+[Match]
+Path=pci-0000:01:1b.0-usb-0:2:1.0
+Driver=cdc_ether
+
+[Link]
+Description=Huawei E3372h-607 in HiLink mode
+NamePolicy=path
+MACAddress=0c:5b:8f:27:9a:64
+
+где в поле Path указывается найденное ранее значение ID_PATH модема, а в поле MACAddress значение мак-адреса, которое
+надо присвоить этому модему. Можно взять мак-адрес исходный и просто менять последнюю цифру, чтобы у каждого модема
+был уникальный мак-адрес.
+
+После того, как для каждого модема создан такой конфг-файл, выполняем команду:
+sudo ln -s /lib/udev/rules.d/80-net-setup-link.rules /etc/udev/rules.d/80-net-setup-link.rules
+
+и перезапускаем сервер, после чего должны появиться IP-интерфейсы всех модемов.
+Доп информация по этой проблеме тут: https://askubuntu.com/questions/1076798/how-to-avoid-same-duplicate-mac-address-for-huawei-e3372h-607-4g-modems?noredirect=1
+
+Если после рестарта появились интерфесы и у них есть IP-адреса, то идем в п. 8. Если адресов нет, то продолжаем со
+следующего пункта
+
+7. Настраиваем такой сетевой конфиг
+
+jaka@netbot:~$ cat /etc/netplan/00-installer-config.yaml
+network:
+  ethernets:
+    ens18:
+      dhcp4: false
+      addresses: [192.168.1.63/24]
+      routes:
+        - to: 0.0.0.0/0
+          via: 192.168.1.1
+          metric: 50
+    enp1s27u1:
+      dhcp4: false
+      addresses: [192.168.8.100/24]
+      routing-policy:
+        - from: 192.168.8.100
+          table: 8
+      routes:
+        - to: 0.0.0.0/0
+          via: 192.168.8.1
+          table: 8
+          metric: 101
+    enp1s27u2:
+      dhcp4: false
+      addresses: [192.168.9.100/24]
+      routing-policy:
+        - from: 192.168.9.100
+          table: 9
+      routes:
+        - to: 0.0.0.0/0
+          via: 192.168.9.1
+          table: 9
+          metric: 102
+  version: 2
+jaka@netbot:~$
+
+
+8. Поднятие контейнера 3proxy:
 
 Перед выполнением нижеприведенной команды docker run надо настроить конфигурационный файл 3proxy.cfg, и положить его в папку /etc/dockerapp/3proxy
 
+Для Intel платформ:
+sudo docker run -dt --restart always --network host -v /etc/dockerapp/3proxy:/usr/local/3proxy/conf --name 3proxy 3proxy/3proxy
+
+Для raspberry:
 sudo docker run -dt --restart always --network host -v /etc/dockerapp/3proxy:/usr/local/3proxy/conf --name 3proxy victorrds/3proxy
 
 
-Поднятие контейнера haproxy:
+9. Поднятие контейнера haproxy:
 
 Перед выполнением команды в текущем каталоге должен лежать конфиг файл haproxy.cfg
+
+Для Intel:
+sudo docker run -dt --restart always --name haproxy --network host -v $(pwd):/usr/local/etc/haproxy:ro haproxytech/haproxy-ubuntu
+
+Для Raspberry:
 sudo docker run -dt --restart always --name haproxy --network host -v $(pwd):/usr/local/etc/haproxy:ro haproxytech/haproxy-alpine:2.4
    
 полная инструкция HAProxy https://www.haproxy.com/blog/how-to-run-haproxy-with-docker/
 
 
-Поднятие контейнера Python, на котором будет крутиться скрипт смены IP-адресов changeIP.py (пока не используется):
+10. Поднятие контейнера Python, на котором будет крутиться скрипт смены IP-адресов changeIP.py (пока не используется):
 
 docker run -dt --restart always --name ipchanger --network host python
 

@@ -15,13 +15,13 @@ wait_time = 20  # количество секунд ожидания подня�
 def removeModemFromPull(modem):
     result = os.system(
         'echo "set server ' + modem + '/' + modem + ' state drain" | socat stdio tcp4-connect:127.0.0.1:1350')  # выведем текущий сервер из пула haproxy
-
+    time.sleep(1)
 
 # Функция возврата модема в пул балансировки haproxy
 def returnModemToPull(modem):
     result = os.system(
         'echo "set server ' + modem + '/' + modem + ' state ready" | socat stdio tcp4-connect:127.0.0.1:1350')  # вернем текущий сервер в пул haproxy
-
+    time.sleep(1)
 
 def isModemNeedChangeIP(modem, client) -> bool:
     if int(client.monitoring.traffic_statistics().get('CurrentConnectTime')) >= max_ip_life_time:
@@ -63,7 +63,7 @@ def checkModemConnection(modem) -> bool:
     if not response2:
         return False
     elif not os.path.exists("externalIPs.txt"):
-        d= {modem: response2}
+        d = {modem: response2}
     else:
         with open('externalIPs.txt') as f1:
             d: object = json.load(f1)
@@ -97,4 +97,3 @@ for modem in Modems:
                         break
                 else:
                     break
-
