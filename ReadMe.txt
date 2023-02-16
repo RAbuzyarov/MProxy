@@ -42,7 +42,7 @@
 
 Перед выполнением нижеприведенной команды docker run надо настроить конфигурационный файл 3proxy.cfg, и положить его в папку /etc/dockerapp/3proxy
 
-docker run -dt --restart always --network host -v /etc/dockerapp/3proxy:/usr/local/3proxy/conf --name 3proxy victorrds/3proxy
+sudo docker run -dt --restart always --network host -v /etc/dockerapp/3proxy:/usr/local/3proxy/conf --name 3proxy victorrds/3proxy
 
 
 Поднятие контейнера haproxy:

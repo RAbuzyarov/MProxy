@@ -54,7 +54,7 @@ def changeModemIP(modem, client) -> bool:
         return False
 
 
-def checkModemConnection(modem):
+def checkModemConnection(modem) -> bool:
     command1 = "echo \"show servers state\" | socat stdio tcp4-connect:127.0.0.1:1350 | grep -E \"(" + modem + ".*){2}\" | cut -d \" \" -f 5,19"
     response1 = subprocess.check_output(command1, shell=True, text=True)
     proxy = response1.split()
@@ -88,13 +88,12 @@ with open('ltemodems.cfg', 'r') as f:
 for modem in Modems:
     with Connection("http://admin:Password01*@" + modem) as connection:
         client = Client(connection)
-        if not isModemNeedChangeIP(modem, client):
-            break
-        removeModemFromPull(modem)
-        for i in range(3):
-            if changeModemIP(modem, client):
-                if checkModemConnection(modem):
-                    returnModemToPull(modem)
+        if isModemNeedChangeIP(modem, client):
+            removeModemFromPull(modem)
+            for i in range(3):
+                if changeModemIP(modem, client):
+                    if checkModemConnection(modem):
+                        returnModemToPull(modem)
+                        break
+                else:
                     break
-            else:
-                break
