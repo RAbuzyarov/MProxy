@@ -7,8 +7,10 @@ import json
 from huawei_lte_api.Client import Client
 from huawei_lte_api.Connection import Connection
 
+proxyhome = '' #домашняя папка, где будет лежать скрипт на линуксе
 max_ip_life_time = 300  # время жизни IP-адреса модема
 wait_time = 20  # количество секунд ожидания поднятия модема после смены IP
+modempassword = '****' # Пароль доступа к вебке модемов
 
 
 # Функция вывода модема из пула балансировки haproxy
@@ -63,16 +65,16 @@ def checkModemConnection(modem) -> bool:
     response2 = subprocess.check_output(command2, shell=True, text=True).rstrip()
     if not response2:
         return False
-    elif not os.path.exists("externalIPs.txt"):
+    elif not os.path.exists(proxyhome + "externalIPs.txt"):
         d = {modem: response2}
     else:
-        with open('externalIPs.txt') as f1:
+        with open(proxyhome + 'externalIPs.txt') as f1:
             d: object = json.load(f1)
         for key, value in d.items():
             if value == response2:
                 return False
         d[modem] = response2
-    with open('externalIPs.txt', 'w') as f1:
+    with open(proxyhome + 'externalIPs.txt', 'w') as f1:
         f1.write(json.dumps(d))
     return True
 
@@ -80,7 +82,7 @@ def checkModemConnection(modem) -> bool:
 # Основной сценарий
 
 # получим список модемов из конфиг файла ltemodems.cfg
-with open('ltemodems.cfg', 'r') as f:
+with open(proxyhome + 'ltemodems.cfg', 'r') as f:
     Modems = list([line.rstrip() for line in f])
 
 # для каждого модема по списку, если после последней смены IP-адреса прошло более 5 минут, выполним вывод из пула haproxy, сменим IP-адрес,
@@ -88,7 +90,7 @@ with open('ltemodems.cfg', 'r') as f:
 # Если модем не подключился или адрес не уникален, то повторим процедуру смены адреса (максимум 3 повтора).
 for modem in Modems:
     print("start ipchanging modem " + modem)
-    with Connection("http://admin:*****@" + modem) as connection:
+    with Connection("http://admin:" + modempassword + "@" + modem) as connection:
         client = Client(connection)
         if isModemNeedChangeIP(modem, client):
             removeModemFromPull(modem)

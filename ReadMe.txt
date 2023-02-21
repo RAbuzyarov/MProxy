@@ -154,6 +154,8 @@ sudo ln -s /lib/udev/rules.d/80-net-setup-link.rules /etc/udev/rules.d/80-net-se
 
 7. Настраиваем такой сетевой конфиг
 
+Для Ubuntu:
+
 jaka@netbot:~$ cat /etc/netplan/00-installer-config.yaml
 network:
   ethernets:
@@ -188,6 +190,15 @@ network:
           metric: 102
   version: 2
 jaka@netbot:~$
+
+
+Для Gentoo:
+
+nmcli connection add type ethernet con-name modem8 ifname enp0s20f0u5u1u1 ipv4.method manual ipv4.addresses 192.168.8.100/24 ipv4.routes "0.0.0.0/0 192.168.8.1 table=8" ipv4.routing-rules "priority 108 from 192.168.8.100 table 8"
+nmcli connection add type ethernet con-name modem9 ifname enp0s20f0u5u1u3 ipv4.method manual ipv4.addresses 192.168.9.100/24 ipv4.routes "0.0.0.0/0 192.168.9.1 table=9" ipv4.routing-rules "priority 109 from 192.168.9.100 table 9"
+nmcli connection add type ethernet con-name modem10 ifname enp0s20f0u5u2 ipv4.method manual ipv4.addresses 192.168.10.100/24 ipv4.routes "0.0.0.0/0 192.168.10.1 table=10" ipv4.routing-rules "priority 110 from 192.168.10.100 table 10"
+nmcli connection add type ethernet con-name modem11 ifname enp0s20f0u5u4 ipv4.method manual ipv4.addresses 192.168.11.100/24 ipv4.routes "0.0.0.0/0 192.168.11.1 table=11" ipv4.routing-rules "priority 111 from 192.168.11.100 table 11"
+nmcli connection add type ethernet con-name modem12 ifname enp0s20f0u2 ipv4.method manual ipv4.addresses 192.168.12.100/24 ipv4.routes "0.0.0.0/0 192.168.12.1 table=12" ipv4.routing-rules "priority 112 from 192.168.12.100 table 12"
 
 8. Поправить адрес DNS 8.8.8.8 в /etc/resolv.conf
 
@@ -228,7 +239,9 @@ pip install huawei-lte-api
 sudo apt install socat
 
 
-11. crontab -e
-*/1 * * * * /home/jaka/ipchanger.py 2> /dev/null 1> /dev/null
-установить пакет резолвера
+11. Вставить в скрипте правильный пароль доступа к модемам.
+12. crontab -e
+*/1 * * * * /home/jaka/ipchanger.py >/dev/null 2>&1
+
+13. установить пакет резолвера
 
