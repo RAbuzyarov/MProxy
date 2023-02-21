@@ -229,6 +229,6 @@ sudo apt install socat
 
 
 11. crontab -e
-*/1 * * * * /home/jaka/changeIP.py 2> /dev/null 1> /dev/null
+*/1 * * * * /home/jaka/ipchanger.py 2> /dev/null 1> /dev/null
 установить пакет резолвера
 

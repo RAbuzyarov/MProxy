@@ -87,6 +87,7 @@ with open('ltemodems.cfg', 'r') as f:
 # удостоверимся, что модем точно подключен к интернету и что полученный IP-адрес уникален, и вернем его в пул.
 # Если модем не подключился или адрес не уникален, то повторим процедуру смены адреса (максимум 3 повтора).
 for modem in Modems:
+    print("start ipchanging modem " + modem)
     with Connection("http://admin:*****@" + modem) as connection:
         client = Client(connection)
         if isModemNeedChangeIP(modem, client):
@@ -95,6 +96,11 @@ for modem in Modems:
                 if changeModemIP(modem, client):
                     if checkModemConnection(modem):
                         returnModemToPull(modem)
+                        print("modem " + modem + " ipchange result: Success")
                         break
                 else:
+                    print("Modem " + modem + " - ipchange result: Fail")
                     break
+        else:
+             print("Modem " + modem + " - ipchange result: not yet")
+
