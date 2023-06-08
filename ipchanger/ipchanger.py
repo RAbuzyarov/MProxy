@@ -44,7 +44,7 @@ def changeModemIP(modem, client) -> bool:
         status = client.monitoring.status()
         if status.get('ConnectionStatus') == '901':
             break
-        if i >= wait_time / 2:
+        if i == wait_time // 2:
             client.dial_up.set_mobile_dataswitch(0)
             time.sleep(1)
             client.dial_up.set_mobile_dataswitch(1)
