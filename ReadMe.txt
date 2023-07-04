@@ -245,19 +245,25 @@ sudo docker run -dt --restart always --name haproxy --network host -v $(pwd):/us
 полная инструкция HAProxy https://www.haproxy.com/blog/how-to-run-haproxy-with-docker/
 
 
-10. Поднятие контейнера Python, на котором будет крутиться скрипт смены IP-адресов ipchange.py:
-
+10. Скрипт управления модемами написан на Python. Его можно запускать либо в отдельном контейнере с Python, либо установить прямо на хосте.
+Чтобы установить Docker-контейнер выполняем команду:
 docker run -dt --restart always --name ipchanger --network host python
+и дальнейшие настройки уже производим внутри контейнера. 
 
-11. Установка Python классов для работы с API Huawei
+Я подумал, что контейнер тут излишний, поэтому проще скрипт устанавливать прямо на хосте и по сей день на всех проксях ставлю его прямо на хост.
 
+- Если не установлен Python, то ставим его sudo apt install python, а также программу pip (sudo apt install pip).
 
+- Далее устанавливаем библиотеки управления модемами через API:
 pip install huawei-lte-api
+
+- а также программу socat:
 sudo apt install socat
 
-
-12. Вставить в параметрах скрипта правильный пароль доступа к модемам и указать со слешом на конце полный путь к папке, где лежит скрипт ipchanger.py.
-13. Добавить задание на ежеминутный запуск скрипта:
+- копируем скрипт ipchanger.py https://github.com/RAbuzyarov/MProxy/blob/master/ipchanger/ipchanger.py в папку /home/<имя пользователя>/ipchanger
+- копируем и настраиваем список модемов в виде файла ltemodems.cfg https://github.com/RAbuzyarov/MProxy/blob/master/ipchanger/ltemodems.cfg  в ту же папку.
+- настраиваем в параметрах скрипта ipchanger.py (в самом начале скрипта) правильный пароль доступа к модемам и указываем со слешом на конце полный путь к папке, где лежит скрипт ipchanger.py.
+- добавляем задание на ежеминутный запуск скрипта:
 crontab -e
 */1 * * * * /home/<имя пользователя>/ipchanger.py >/dev/null 2>&1
 
