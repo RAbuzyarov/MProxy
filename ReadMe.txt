@@ -40,8 +40,7 @@
     Инструкция по установке
 
 1. Установить Linux. Провереная конфигурация - последняя версия сервера Ubuntu
-2.
-3. Подключить модемы и если ОС на виртуализации, то пробросить подключение USB модемов в виртуалку.
+2. Подключить модемы и если ОС на виртуализации, то пробросить подключение USB модемов в виртуалку.
 4. Настроить через веб-интерфесы IP-адреса модемам, и вход в вебку по логину/паролю
 5. При правильном подключении модемы в линуксе должны получить каждый свой IP-интерфейс с IP-адресом,
 который вы задали в вебке каждого модема. Список IP-интерфейсов можно получить командой ifconfig -a
@@ -100,7 +99,15 @@ jaka@netbot:~$
 Если вы видите не все интерфейсы, или вообще ни одного не видите, то это значит у некоторых или у всех модемов одинаковый MAC-адрес,
 что запрещено. Такое может быть, если на модемы заливалась прошивка с идентичными настройками. Переходите на сл. пункт.
 
-6. Удостовериться, что у вас действительно есть проблема одинаковых MAC-адресов, можно дав команду:
+6. Бывает, что изначально модемы в линуксе определяются как флешки, а не как модемы. Если по команде "dmesg -T | grep -i usb" вы не видите сетевых интерфесов модемов - значит они определились как флешки. Чтобы перевести их в режим модемов нужно сделать следующее. 
+- Установить, если не установлен, пакет sudo apt install usb_modeswitch 
+- В файл etc/usb_modeswitch.conf добавить вот такие строки:
+DefaultVendor = 0x12d1
+DefaultProduct = 0x1f01
+
+- выполнить несколько раз команду sudo usb_modeswitch -c /etc/usb_^Cdeswitch.conf -J пока все модемы не будут переведены в режим модема. Каждый запуск команды переводит в нужный режим один модем. То есть если надо перевести в нужный режим пять модемов, то и команду надо выполнить пять раз. 
+
+7. Удостовериться, что у вас действительно есть проблема одинаковых MAC-адресов, можно дав команду:
 dmesg -T | grep -i usb
 В примере ниже в последних двух строках вывода этой команды видно, что два модема имеют одинаковые MAC-и
 
@@ -136,7 +143,7 @@ Driver=cdc_ether
 
 [Link]
 Description=Huawei E3372h-607 in HiLink mode
-NamePolicy=path
+Name=<имя сетевого интерфейса, которое надо присвоить данному модему, например modem8>
 MACAddress=0c:5b:8f:27:9a:64
 
 где в поле Path указывается найденное ранее значение ID_PATH модема, а в поле MACAddress значение мак-адреса, которое
@@ -146,7 +153,7 @@ MACAddress=0c:5b:8f:27:9a:64
 После того, как для каждого модема создан такой конфг-файл, выполняем команду:
 sudo ln -s /lib/udev/rules.d/80-net-setup-link.rules /etc/udev/rules.d/80-net-setup-link.rules
 
-и перезапускаем сервер, после чего должны появиться IP-интерфейсы всех модемов.
+и перезапускаем сервер, после чего должны появиться IP-интерфейсы всех модемов с теми именами, которые вы прописали в вышеуказанных конфиг файлах.
 Доп информация по этой проблеме тут: https://askubuntu.com/questions/1076798/how-to-avoid-same-duplicate-mac-address-for-huawei-e3372h-607-4g-modems?noredirect=1
 
 Если после рестарта появились интерфесы и у них есть IP-адреса, то идем в п. 8. Если адресов нет, то продолжаем со
@@ -192,56 +199,66 @@ network:
 jaka@netbot:~$
 
 
-Для Gentoo:
+Для версий линукса, где сетью управляет пакет Network Manager (утилита nmcli):
+Вывести текущий список connections можно командой 
+sudo nmcli c
+Из вывода команды надо взять идентификаторы тех коннекшинов, которые отвечают за модемы, и далее выполнить следующие команды для каждого коннекшина:
 
+nmcli connection modify 1bd12218-2b11-3b78-a08e-d50eeb64f51c ipv4.routes "0.0.0.0/0 192.168.8.1 table=8" ipv4.routing-rules "priority 108 from 192.168.8.100 table 8"
+nmcli connection modify 1bd12218-2b11-3b78-a08e-d50eeb64f52c ipv4.routes "0.0.0.0/0 192.168.9.1 table=9" ipv4.routing-rules "priority 109 from 192.168.9.100 table 9"
+nmcli connection modify 1bd12218-2b11-3b78-a08e-d50eeb64f53c ipv4.routes "0.0.0.0/0 192.168.10.1 table=10" ipv4.routing-rules "priority 110 from 192.168.10.100 table 10"
+nmcli connection modify 1bd12218-2b11-3b78-a08e-d50eeb64f54c ipv4.routes "0.0.0.0/0 192.168.11.1 table=11" ipv4.routing-rules "priority 111 from 192.168.11.100 table 11"
+nmcli connection modify 1bd12218-2b11-3b78-a08e-d50eeb64f55c ipv4.routes "0.0.0.0/0 192.168.12.1 table=12" ipv4.routing-rules "priority 112 from 192.168.12.100 table 12"
+
+
+если коннекшины не созданы и не выводятся в списке nmcli c, то их надо создать. Ниже вариант создания со статическим назначением им IP-адресов, хотя можно и динамически.
 nmcli connection add type ethernet con-name modem8 ifname enp0s20f0u5u1u1 ipv4.method manual ipv4.addresses 192.168.8.100/24 ipv4.routes "0.0.0.0/0 192.168.8.1 table=8" ipv4.routing-rules "priority 108 from 192.168.8.100 table 8"
 nmcli connection add type ethernet con-name modem9 ifname enp0s20f0u5u1u3 ipv4.method manual ipv4.addresses 192.168.9.100/24 ipv4.routes "0.0.0.0/0 192.168.9.1 table=9" ipv4.routing-rules "priority 109 from 192.168.9.100 table 9"
 nmcli connection add type ethernet con-name modem10 ifname enp0s20f0u5u2 ipv4.method manual ipv4.addresses 192.168.10.100/24 ipv4.routes "0.0.0.0/0 192.168.10.1 table=10" ipv4.routing-rules "priority 110 from 192.168.10.100 table 10"
 nmcli connection add type ethernet con-name modem11 ifname enp0s20f0u5u4 ipv4.method manual ipv4.addresses 192.168.11.100/24 ipv4.routes "0.0.0.0/0 192.168.11.1 table=11" ipv4.routing-rules "priority 111 from 192.168.11.100 table 11"
 nmcli connection add type ethernet con-name modem12 ifname enp0s20f0u2 ipv4.method manual ipv4.addresses 192.168.12.100/24 ipv4.routes "0.0.0.0/0 192.168.12.1 table=12" ipv4.routing-rules "priority 112 from 192.168.12.100 table 12"
 
-8. Поправить адрес DNS 8.8.8.8 в /etc/resolv.conf
+8. Если слетел адрес ДНС, то прописать 8.8.8.8 в /etc/resolv.conf
 
 9. На линуксе установить doker по инструкции https://docs.docker.com/engine/install/ubuntu/
 
 10. Поднятие контейнера 3proxy:
 
-Перед выполнением нижеприведенной команды docker run надо настроить конфигурационный файл 3proxy.cfg, и положить его в папку /etc/dockerapp/3proxy
+Перед выполнением нижеприведенной команды docker run надо настроить конфигурационный файл 3proxy.cfg, и положить его в домашнюю папку пользователя /home/<имя пользователя>/3proxy. Зайти в эту папку и выполнить команду:
 
 Для Intel платформ:
-sudo docker run -dt --restart always --network host -v /etc/dockerapp/3proxy:/usr/local/3proxy/conf --name 3proxy 3proxy/3proxy
+sudo docker run -dt --restart always --network host -v $(pwd):/usr/local/3proxy/conf --name 3proxy 3proxy/3proxy
 
-Для raspberry:
-sudo docker run -dt --restart always --network host -v /etc/dockerapp/3proxy:/usr/local/3proxy/conf --name 3proxy victorrds/3proxy
+Для raspberry или armbian (процессоры с ARM-архитектурой):
+sudo docker run -dt --restart always --network host -v $(pwd):/usr/local/3proxy/conf --name 3proxy victorrds/3proxy
 
 
 10. Поднятие контейнера haproxy:
 
-Перед выполнением команды в текущем каталоге должен лежать конфиг файл haproxy.cfg
+Перед выполнением нижеприведенной команды docker run надо настроить конфигурационный файл haproxy.cfg, и положить его в домашнюю папку пользователя /home/<имя пользователя>/haproxy. Зайти в эту папку и выполнить команду:
 
 Для Intel:
 sudo docker run -dt --restart always --name haproxy --network host -v $(pwd):/usr/local/etc/haproxy:ro haproxytech/haproxy-ubuntu
 
-Для Raspberry:
+Для raspberry или armbian (процессоры с ARM-архитектурой):
 sudo docker run -dt --restart always --name haproxy --network host -v $(pwd):/usr/local/etc/haproxy:ro haproxytech/haproxy-alpine:2.4
    
 полная инструкция HAProxy https://www.haproxy.com/blog/how-to-run-haproxy-with-docker/
 
 
-10. Поднятие контейнера Python, на котором будет крутиться скрипт смены IP-адресов changeIP.py (пока не используется):
+10. Поднятие контейнера Python, на котором будет крутиться скрипт смены IP-адресов ipchange.py:
 
 docker run -dt --restart always --name ipchanger --network host python
 
-Установка Python классов для работы с API Huawei
+11. Установка Python классов для работы с API Huawei
 
 
 pip install huawei-lte-api
 sudo apt install socat
 
 
-11. Вставить в скрипте правильный пароль доступа к модемам.
-12. crontab -e
-*/1 * * * * /home/jaka/ipchanger.py >/dev/null 2>&1
-
-13. установить пакет резолвера
+12. Вставить в параметрах скрипта правильный пароль доступа к модемам и указать со слешом на конце полный путь к папке, где лежит скрипт ipchanger.py.
+13. Добавить задание на ежеминутный запуск скрипта:
+crontab -e
+*/1 * * * * /home/<имя пользователя>/ipchanger.py >/dev/null 2>&1
 
