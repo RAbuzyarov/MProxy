@@ -260,6 +260,9 @@ pip install huawei-lte-api
 - а также программу socat:
 sudo apt install socat
 
+- ну и программу jq
+sudo apt install jq
+
 - копируем скрипт ipchanger.py https://github.com/RAbuzyarov/MProxy/blob/master/ipchanger/ipchanger.py в папку /home/<имя пользователя>/ipchanger
 - копируем и настраиваем список модемов в виде файла ltemodems.cfg https://github.com/RAbuzyarov/MProxy/blob/master/ipchanger/ltemodems.cfg  в ту же папку.
 - настраиваем в параметрах скрипта ipchanger.py (в самом начале скрипта) правильный пароль доступа к модемам и указываем со слешом на конце полный путь к папке, где лежит скрипт ipchanger.py.
