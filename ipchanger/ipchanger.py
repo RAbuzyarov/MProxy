@@ -7,10 +7,10 @@ import json
 from huawei_lte_api.Client import Client
 from huawei_lte_api.Connection import Connection
 
-proxyhome = '' #домашняя папка, где будет лежать скрипт на линуксе
+proxyhome = '/home/dmitry/ipchanger/' #домашняя папка, где будет лежать скрипт на линуксе
 max_ip_life_time = 300  # время жизни IP-адреса модема
 wait_time = 20  # количество секунд ожидания поднятия модема после смены IP
-modempassword = '****' # Пароль доступа к вебке модемов
+modempassword = 'Password01*' # Пароль доступа к вебке модемов
 
 
 # Функция вывода модема из пула балансировки haproxy
@@ -44,7 +44,7 @@ def changeModemIP(modem, client) -> bool:
         status = client.monitoring.status()
         if status.get('ConnectionStatus') == '901':
             break
-        if i == wait_time // 2:
+        if i >= wait_time / 2:
             client.dial_up.set_mobile_dataswitch(0)
             time.sleep(1)
             client.dial_up.set_mobile_dataswitch(1)
@@ -56,24 +56,13 @@ def changeModemIP(modem, client) -> bool:
     else:
         return False
 
-# Функция запоминает выданный IP_шник в коллекции, проверяя его на уникальность
-def addIpToCollection(ip):
-    ipaddresses = []
-    with open(proxyhome + 'IPCollection.txt') as f2:
-        for line in f2:
-            curr_place = line [:-1]
-            ipaddresses.append(curr_place)
-    ipaddresses.append(ip)
-    with open(proxyhome + 'IPCollection.txt', 'w') as f2:
-        uniq_ipadresses = set(ipaddresses)
-        for listitem in uniq_ipadresses:
-            f2.write(f'{listitem}\n')
 
 def checkModemConnection(modem) -> bool:
     command1 = "echo \"show servers state\" | socat stdio tcp4-connect:127.0.0.1:1350 | grep -E \"(" + modem + ".*){2}\" | cut -d \" \" -f 5,19"
     response1 = subprocess.check_output(command1, shell=True, text=True)
     proxy = response1.split()
-    command2 = "curl -sx http://" + proxy[0] + ":" + proxy[1] + " http://2ip.ru"
+    command2 = "curl -sx http://" + proxy[0] + ":" + proxy[1] + " telnetmyip.com | jq -r .ip"
+    print(command2)
     response2 = subprocess.check_output(command2, shell=True, text=True).rstrip()
     if not response2:
         return False
@@ -86,11 +75,9 @@ def checkModemConnection(modem) -> bool:
             if value == response2:
                 return False
         d[modem] = response2
-#        addIpToCollection(response2)
     with open(proxyhome + 'externalIPs.txt', 'w') as f1:
         f1.write(json.dumps(d))
     return True
-
 
 # Основной сценарий
 
@@ -118,4 +105,3 @@ for modem in Modems:
                     break
         else:
              print("Modem " + modem + " - ipchange result: not yet")
-
