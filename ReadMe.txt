@@ -155,8 +155,7 @@ sudo ln -s /lib/udev/rules.d/80-net-setup-link.rules /etc/udev/rules.d/80-net-se
 и перезапускаем сервер, после чего должны появиться IP-интерфейсы всех модемов с теми именами, которые вы прописали в вышеуказанных конфиг файлах.
 Доп информация по этой проблеме тут: https://askubuntu.com/questions/1076798/how-to-avoid-same-duplicate-mac-address-for-huawei-e3372h-607-4g-modems?noredirect=1
 
-Если после рестарта появились интерфесы и у них есть IP-адреса, то идем в п. 8. Если адресов нет, то продолжаем со
-следующего пункта
+Если после рестарта появились интерфесы и у них есть IP-адреса, то идем в п. 8. Если адресов нет, то продолжаем со следующего пункта
 
 7. Настраиваем такой сетевой конфиг
 
@@ -216,6 +215,16 @@ nmcli connection add type ethernet con-name modem9 ifname enp0s20f0u5u1u3 ipv4.m
 nmcli connection add type ethernet con-name modem10 ifname enp0s20f0u5u2 ipv4.method manual ipv4.addresses 192.168.10.100/24 ipv4.routes "0.0.0.0/0 192.168.10.1 table=10" ipv4.routing-rules "priority 110 from 192.168.10.100 table 10"
 nmcli connection add type ethernet con-name modem11 ifname enp0s20f0u5u4 ipv4.method manual ipv4.addresses 192.168.11.100/24 ipv4.routes "0.0.0.0/0 192.168.11.1 table=11" ipv4.routing-rules "priority 111 from 192.168.11.100 table 11"
 nmcli connection add type ethernet con-name modem12 ifname enp0s20f0u2 ipv4.method manual ipv4.addresses 192.168.12.100/24 ipv4.routes "0.0.0.0/0 192.168.12.1 table=12" ipv4.routing-rules "priority 112 from 192.168.12.100 table 12"
+
+чтобы зафиксировать имя основного интерфейса ethernet, чтобы оно после каждого рестарта не менялось со сбросом всех настроек, на Ubuntu это делается так:
+echo 'SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="02:00:00:24:1c:01", NAME="eth0"' | sudo tee /etc/udev/rules.d/70-persistent-net.rules
+где надо подставить мак-адрес вашего сетевого интерфейса. После чего надо сделать рестарт
+
+После этого можно присвоить данному интерфейсу постоянное имя и статические IP-параметры через nmcli:
+nmcli connection mod "eth0" ipv4.method manual ipv4.addresses 192.168.1.50/24 ipv4.routes "0.0.0.0/0 192.168.1.1" ipv4.route-metric 50
+nmcli connection reload;nmcli connection down "eth0";nmcli connection up "eth0"
+
+Очень важно установить метрику более выского приоритета для основного маршрута через данный интерфейс, иначе дефолтный маршрут может установиться через какой-нибудь модем и основной трафик пойдет не через домашний интернет-канал, а через один из модемов.
 
 8. Если слетел адрес ДНС, то прописать 8.8.8.8 в /etc/resolv.conf
 
